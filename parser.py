@@ -7,7 +7,6 @@ def literals_of(*args):
 def all_concats(*toks):
     def helper(left, right):
         return [i + j for i in left for j in right]
-
     return reduce(helper, toks)
 
 
@@ -82,3 +81,18 @@ instruction = add | sub | mul | mad | div | rem\
 label = p.Group(identifier + ':')
 gaurd = p.Group('@' + p.Literal('!') * (0, 1) + identifier)
 statement = (label | gaurd) * (0, 1) + instruction + p.delimitedList(identifier | ptx_literal) * (0, 1) + ';'
+
+def handle_file(path):
+    with open(path) as fil:
+        for l in fil:
+            l = l.strip()
+            yield statement.parseString(l)
+
+try:
+    statement.parseString("add.u32 a, b, c;")
+except:
+    print('Loaded')
+
+if __name__ == "__main__":
+    statement.parseString("add.u32 a, b, c;")
+    test = list(handle_file('test.ptx'))
