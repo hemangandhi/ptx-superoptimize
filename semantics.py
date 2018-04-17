@@ -5,6 +5,13 @@ import z3
 import struct
 
 def to_z3_obj(arg, typ, ident_t = None):
+    def intern_int(x):
+        if len(x) == 3:
+            return int(x[2], 16)
+        elif len(x) == 2:
+            return int(x[1], 8)
+        else:
+            return int(x[0])
     id_t_2_z3 = {
         ptx.integer_literal: z3.Int,
         ptx.float_literal: z3.Real,
@@ -12,12 +19,12 @@ def to_z3_obj(arg, typ, ident_t = None):
         ptx.predicate_const: z3.Bool
     }
     return {
-        ptx.integer_literal: lambda x: int(ptx.integer_literal.parseString(arg)[0][2], 16),
+        ptx.integer_literal: intern_int,
         ptx.float_literal: lambda x: struct.unpack('f', arg)[0],
         ptx.double_literal: lambda x: struct.unpack('d', arg)[0],
         ptx.predicate_const: bool,
-        ptx.identifier: lambda x: id_t_2_z3[ident_t](x)
-    }[typ](arg[0])
+        ptx.identifier: lambda x: id_t_2_z3[ident_t](''.join(x))
+    }[typ](arg)
 
 class Instr:
     instrs = dict()
@@ -51,6 +58,8 @@ add = Instr('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] + ag[
 sub = Instr('sub', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] - ag[2]}),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 mul = Instr('mul', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] * ag[2]}),
+        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
+div = Instr('div', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] / ag[2]}),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 
 def read_file(path):

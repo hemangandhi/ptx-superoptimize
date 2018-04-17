@@ -1,3 +1,5 @@
-sub.u32 b, e, f;
-add.u32 a, b, c;
+sub.u32 b, e, 077;
+add.u32 a, 4, 0xa5;
+div.s32 f, b, a;
+mul.hi.u32 test, foo, 2;
 mad.hi.u32 d, a, b, c;
