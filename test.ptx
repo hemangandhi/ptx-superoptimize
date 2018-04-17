@@ -1,0 +1,2 @@
+add.u32 a, b, c;
+mad.hi.u32 d, a, b, c;
