@@ -88,10 +88,18 @@ def handle_file(path):
             l = l.strip()
             yield statement.parseString(l)
 
+def get_instr(parsed):
+    if parsed[0].startswith('.') or parsed[0].startswith('@'):
+        return parsed[1], 1
+    return parsed[0], 0
+
 try:
     statement.parseString("add.u32 a, b, c;")
 except:
-    print('Loaded')
+    #TODO: figure out better caching hack.
+    #(it basically has too many possible instructions so seems to recurse
+    #too much until it caches stuff).
+    pass
 
 if __name__ == "__main__":
     statement.parseString("add.u32 a, b, c;")

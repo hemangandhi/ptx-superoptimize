@@ -1,2 +1,3 @@
+sub.u32 b, e, f;
 add.u32 a, b, c;
 mad.hi.u32 d, a, b, c;

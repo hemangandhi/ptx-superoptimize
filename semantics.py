@@ -16,22 +16,23 @@ def to_z3_obj(arg, typ, ident_t = None):
         ptx.float_literal: lambda x: struct.unpack('f', arg)[0],
         ptx.double_literal: lambda x: struct.unpack('d', arg)[0],
         ptx.predicate_const: bool,
-        ptx.identifier: lambda x: id_t_2_z3[ident_t](arg)
-    }[typ](arg)
+        ptx.identifier: lambda x: id_t_2_z3[ident_t](x)
+    }[typ](arg[0])
 
 class Instr:
-    instrs = []
-    def __init__(self, parser, call_on_env, argparser):
+    instrs = dict()
+    def __init__(self, name, parser, call_on_env, argparser):
         self.parser = parser
         self.call_on_env = call_on_env
         self.argparser = argparser
-        Instr.instrs.append(self)
+        Instr.instrs[name] = self
     def __call__(self, args, env):
         def proc_arg(parser, arg):
-            if parser[1]:
-                return to_z3_obj((parser[0] | ptx.identifier).parseString(arg)[0], ptx.identifier, parser)
-            elif parser[0] == ptx.identifier:
+            arg = arg[0]
+            if parser[0] == ptx.identifier:
                 return to_z3_obj(parser[0].parseString(arg)[0], ptx.identifier, parser[1])
+            elif parser[1]:
+                return to_z3_obj((parser[0] | ptx.identifier).parseString(arg)[0], ptx.identifier, parser[0])
             return to_z3_obj(parser[0].parseString(arg)[0], parser)
         try:
             z3_objs = list(map(proc_arg, self.argparser[len(args)], args))
@@ -40,16 +41,30 @@ class Instr:
         else:
             return self.call_on_env(z3_objs, env)
 
-def upd_1_key(d, upd):
+def dict_with_upd(d, upd):
     r = d.copy()
     r.update(upd)
     return r
 
-add = Instr(ptx.add, lambda ag, ev: upd_1_key(ev, {ag[0]: ag[1] + ag[2]}),
+add = Instr('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] + ag[2]}),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-sub = Instr(ptx.add, lambda ag, ev: upd_1_key(ev, {ag[0]: ag[1] - ag[2]}),
+sub = Instr('sub', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] - ag[2]}),
+        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
+mul = Instr('mul', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ag[1] * ag[2]}),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 
 def read_file(path):
-    # reduce(
-    pass
+    def process_instr(env, instr):
+        instr_p, idx = ptx.get_instr(instr)
+        instr_nm = instr_p.split('.')[0]
+        fnd = Instr.instrs.get(instr_nm, None)
+        if fnd is None: return env
+        return fnd(instr[idx + 1:len(instr)-1], env)
+
+    return reduce(process_instr, ptx.handle_file(path), {})
+
+def env_to_query(env):
+    return z3.And(*(i == env[i] for i in env))
+
+if __name__ == "__main__":
+    print(env_to_query(read_file('test.ptx')))
