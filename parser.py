@@ -45,12 +45,13 @@ ptx_literal = integer_literal | float_literal | double_literal | predicate_const
 #         'shfl', 'vabsdiff2', 'vabsdiff4', 'cvt', 'neg', 'shl', 'vadd',
 #         'cvta', 'not', 'shr', 'vadd2', 'vadd4')
 
+types_not64 = ['.u16', '.u32', '.s16', '.s32']
 types = ['.u16', '.u32', '.u64', '.s16', '.s32', '.s64']
 float_bits = all_concats(['.rn', '.rz', '.rm', '.rp'],
         all_concats(['.ftz', ''], ['.sat', ''], ['.f32']) + ['.f64'])
 add = literals_of(*all_concats(["add"], types + ['.sat.s32'] + float_bits))
 sub = literals_of(*all_concats(["sub"], types + ['.sat.s32'] + float_bits))
-mul = literals_of(*(all_concats(["mul"], [".hi", ".lo", ".wide"], types) + float_bits))
+mul = literals_of(*all_concats(["mul"], all_concats([".wide"], types_not64) + float_bits + all_concats([".hi", ".lo"], types)))
 mad = literals_of(*all_concats(["mad"],
     all_concats([".hi", ".lo", ".wide"], types + ['.sat.s32'])
     + float_bits + all_concats(['.ftz', ''], ['.sat', ''], ['.f32'])))
@@ -94,7 +95,7 @@ def get_instr(parsed):
     return parsed[0], 0
 
 try:
-    statement.parseString("add.u32 a, b, c;")
+    statement.parseString("mul.hi.u32 a, b, c;")
 except:
     #TODO: figure out better caching hack.
     #(it basically has too many possible instructions so seems to recurse
@@ -102,5 +103,6 @@ except:
     pass
 
 if __name__ == "__main__":
-    statement.parseString("add.u32 a, b, c;")
+    statement.parseString("mul.hi.u32 a, b, c;")
     test = list(handle_file('test.ptx'))
+    print(test)
