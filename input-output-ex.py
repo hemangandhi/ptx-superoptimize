@@ -7,7 +7,7 @@ def get_examples(path):
     while s.check() == z3.sat:
         v = s.model()
         yield v
-        s.add(z3.Or(*(i != v[i] for i in v)))
+        s.add(z3.Or(*(i() != v[i] for i in v)))
 
 if __name__ == "__main__":
-    print(list(zip(get_examples("test.ptx"), range(10))))
+    print('\n'.join(str(i[0]) for i in zip(get_examples("test.ptx"), range(10))))

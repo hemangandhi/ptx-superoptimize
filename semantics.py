@@ -7,11 +7,11 @@ import struct
 def to_z3_obj(arg, typ, ident_t = None, bitlen = 32):
     def intern_int(x):
         if len(x) == 3:
-            return z3.IntVal(int(x[2], 16))
+            return z3.BitVecVal(int(x[2], 16), bitlen)
         elif len(x) == 2:
-            return z3.IntVal(int(x[1], 8))
+            return z3.BitVecVal(int(x[1], 8), bitlen)
         else:
-            return z3.IntVal(int(x[0]))
+            return z3.BitVecVal(int(x[0]), bitlen)
 
     id_t_2_z3 = {
         ptx.integer_literal: lambda x: z3.BitVec(x, bitlen),
