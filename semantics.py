@@ -57,22 +57,29 @@ def mk_for_all_types(prefix, parser, call_on_env, argparser, types = ptx.types):
     for i in ptx.all_concats([prefix], types):
         Instr(i, parser, call_on_env, argparser, int(i[-2:]))
 
-def dict_with_upd(d, upd):
-    r = d.copy()
-    r.update(upd)
-    return r
+def dict_with_upd(d, upd, outs, ins):
+    only_literals = lambda l: type(l) == z3.BitVecRef
 
-mk_for_all_types('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev.get(ag[1], ag[1]) + ev.get(ag[2], ag[2])}),
+    outs = set(filter(only_literals, outs))
+    ins = set(filter(only_literals, ins))
+    print(d, outs, ins)
+    r = d[0].copy()
+    r.update(upd)
+    #new out = old out - inputs + new outs
+    #new in = inputs - old out - new outs + old in
+    return (r, (d[1] - ins) | outs, d[2] | (ins - d[3] - outs), d[3] | outs | ins)
+
+mk_for_all_types('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) + ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('sub', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev.get(ag[1], ag[1]) - ev.get(ag[2], ag[2])}),
+mk_for_all_types('sub', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) - ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.hi', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(63, 32, z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[2], ag[2])))}),
+mk_for_all_types('mul.hi', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(63, 32, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.lo', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[2], ag[2])))}),
+mk_for_all_types('mul.lo', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev.get(ag[2], ag[2])))}),
+mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, types = [i for i in ptx.types if '64' not in i])
-mk_for_all_types('div', ptx.div, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev.get(ag[1], ag[1]) / ev.get(ag[2], ag[2])}),
+mk_for_all_types('div', ptx.div, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) / ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 
 def read_file(path):
@@ -82,10 +89,10 @@ def read_file(path):
         if fnd is None: return env
         return fnd(instr[idx + 1:len(instr)-1], env)
 
-    return reduce(process_instr, ptx.handle_file(path), {})
+    return reduce(process_instr, ptx.handle_file(path), ({}, set(), set(), set()))
 
 def env_to_query(env):
-    return z3.And(*(i == env[i] for i in env))
+    return z3.And(*(i == env[0][i] for i in env[0]))
 
 if __name__ == "__main__":
     print(env_to_query(read_file('test.ptx')))
