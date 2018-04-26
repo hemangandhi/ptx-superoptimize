@@ -62,7 +62,6 @@ def dict_with_upd(d, upd, outs, ins):
 
     outs = set(filter(only_literals, outs))
     ins = set(filter(only_literals, ins))
-    print(d, outs, ins)
     r = d[0].copy()
     r.update(upd)
     #new out = old out - inputs + new outs
@@ -82,17 +81,29 @@ mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z
 mk_for_all_types('div', ptx.div, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) / ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 
-def read_file(path):
+def read_from_parsed(strs):
     def process_instr(env, instr):
         instr_p, idx = ptx.get_instr(instr)
         fnd = Instr.instrs.get(instr_p, None)
         if fnd is None: return env
         return fnd(instr[idx + 1:len(instr)-1], env)
 
-    return reduce(process_instr, ptx.handle_file(path), ({}, set(), set(), set()))
+    return reduce(process_instr, strs, ({}, set(), set(), set()))
+
+read_file = lambda path: read_from_parsed(ptx.handle_file(path))
 
 def env_to_query(env):
-    return z3.And(*(i == env[0][i] for i in env[0]))
+    return z3.And(*(i == env[0][i] for i in env[1]))
+
+def get_examples(path):
+    s = z3.Solver()
+    ev = read_file(path)
+    s.add(env_to_query(ev))
+    while s.check() == z3.sat:
+        v = s.model()
+        #values, output, input
+        yield v, ev[1], ev[2]
+        s.add(z3.Or(*(i() != v[i] for i in v)))
 
 if __name__ == "__main__":
-    print(env_to_query(read_file('test.ptx')))
+    list(map(lambda x: print(x[0]), zip(get_examples("test.ptx"), range(10))))
