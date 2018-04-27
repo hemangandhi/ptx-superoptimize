@@ -4,7 +4,7 @@ import parser as ptx
 
 class CodeGenerator:
     def __init__(self, spec):
-        self.known_code = ["mul.hi.u32 test, e, 2;", "sub.u32 f, e, 7;"]
+        self.known_code = ["mul.hi.u32 test, e, 2;", "sub.u32 b, e, 77;", "div.u32 f, b, 0xa9;"]
     def __call__(self, examples):
         code = list(map(lambda l: ptx.statement.parseString(l), self.known_code))
         return code
