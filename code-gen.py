@@ -23,5 +23,9 @@ def example_and_code_to_query(example, code):
     return z3.Implies(z3.And(sem.env_to_query(meaning), in_state), out_state)
 
 if __name__ == "__main__":
-    for i in envs_and_instrs("test.ptx"):
+    eis = list(envs_and_instrs("test.ptx"))
+    for i in eis:
         print(i)
+
+    ex = sem.get_examples(eis[-1][0])
+    code = ptx.statement.parseString("mul.hi.u32 e, f, test")
