@@ -101,8 +101,10 @@ def get_examples(ev):
     while s.check() == z3.sat:
         v = s.model()
         #values, output, input
-        yield v, ev[1], ev[2]
+        new_q = yield v, ev[1], ev[2]
         s.add(z3.Or(*(i() != v[i] for i in v)))
+        if new_q != None:
+            s.add(new_q)
 
 if __name__ == "__main__":
     env = read_file("test.ptx")
