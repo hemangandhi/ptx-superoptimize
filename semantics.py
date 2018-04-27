@@ -88,16 +88,15 @@ def read_from_parsed(strs):
         if fnd is None: return env
         return fnd(instr[idx + 1:len(instr)-1], env)
 
-    return reduce(process_instr, strs, ({}, set(), set(), set()))
+    return reduce(lambda e, i: e + [process_instr(e[-1], i)], strs, [({}, set(), set(), set())])
 
 read_file = lambda path: read_from_parsed(ptx.handle_file(path))
 
 def env_to_query(env):
     return z3.And(*(i == env[0][i] for i in env[1]))
 
-def get_examples(path):
+def get_examples(ev):
     s = z3.Solver()
-    ev = read_file(path)
     s.add(env_to_query(ev))
     while s.check() == z3.sat:
         v = s.model()
@@ -106,4 +105,6 @@ def get_examples(path):
         s.add(z3.Or(*(i() != v[i] for i in v)))
 
 if __name__ == "__main__":
-    list(map(lambda x: print(x[0]), zip(get_examples("test.ptx"), range(10))))
+    env = read_file("test.ptx")
+    print(env)
+    list(map(lambda x: print(x[0]), zip(get_examples(env[-1]), range(10))))
