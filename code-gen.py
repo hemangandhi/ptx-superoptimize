@@ -1,13 +1,38 @@
 import semantics as sem
 import z3
 import parser as ptx
+from functools import reduce
 
 class CodeGenerator:
+    @staticmethod
+    def n_p_k(n, k):
+        if k == 1:
+            return map(lambda x: [x], range(n))
+        return ([i] + j for i in range(n) for j in CodeGenerator.n_p_k(n, k - 1))
+    @staticmethod
+    def cross_product(*its):
+        def helper(l, r):
+            print(l, r)
+            for i in l:
+                for j in r:
+                    if type(i) == tuple:
+                        if type(j) == tuple:
+                            yield i + j
+                        else:
+                            yield i + (j,)
+                    elif type(j) == tuple:
+                        yield (i,) + j
+                    else:
+                        yield (i, j)
+        return reduce(helper, its)
     def __init__(self, spec):
-        self.known_code = ["mul.hi.u32 test, e, 2;", "sub.u32 b, e, 77;", "div.u32 f, b, 0xa9;"]
+        print(spec)
+        self.instrs = list(sem.Instr.instrs)
+        self.ctrs = (0,)
+        self.ins = list(spec[2])
+        self.outs = list(spec[1])
     def __call__(self, examples):
-        code = list(map(lambda l: ptx.statement.parseString(l), self.known_code))
-        return code
+        return []
 
 def envs_and_instrs(path):
     def one_more_from(it):
@@ -45,4 +70,9 @@ def keep_trying(spec, example_gen, code_maker):
 if __name__ == "__main__":
     eis = list(envs_and_instrs("test.ptx"))
     ex = sem.get_examples(eis[-1][0])
-    print(keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1])))
+    print(keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0])))
+    p1 = list(CodeGenerator.n_p_k(3, 4))
+    p2 = list(CodeGenerator.n_p_k(4, 4))
+    p3 = list(CodeGenerator.n_p_k(2, 4))
+    for i in CodeGenerator.cross_product(p1, p2, p3):
+        print(i)
