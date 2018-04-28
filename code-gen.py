@@ -47,12 +47,12 @@ class CodeGenerator:
         for var in input_vec:
             if var < num_in_vars:
                 continue
-            if output[var - num_in_vars] < num_out_vars:
+            if output[var - num_in_vars] < num_out_vars or var >= loc:
                 return False
         return True
     @staticmethod
     def check_output(output_vec, num_out_vars):
-        return set(output_vec) <= set(range(num_out_vars))
+        return set(output_vec) >= set(range(num_out_vars))
     @staticmethod
     def make_n_instrs(n, instrs, n_outs, n_ins):
         inst_gen = CodeGenerator.n_p_k(len(instrs), n)
@@ -62,6 +62,24 @@ class CodeGenerator:
                 p_ks = (filter(lambda i: CodeGenerator.check_input_vec(i, outs, n_outs, n_ins, idx), CodeGenerator.n_p_k(n + n_ins, agc - 1))\
                         for idx in range(n) for agc in sem.Instr.instrs[instrs[insts[idx]]].argparser)
                 yield from ((insts, outs, i) for i in CodeGenerator.cross_product(*map(list, p_ks)))
+    @staticmethod
+    def format_instrs(vec, instrs, ins, outs):
+        def if_in_list_else(idx, lst, els):
+            if 0 <= idx < len(lst):
+                return lst[idx]
+            return els
+
+        def do_line_i(i):
+            instr = instrs[vec[0][i]]
+            out = if_in_list_else(vec[1][i], outs, 't' + str(i))
+            inps = map(lambda x: if_in_list_else(x, ins, 't' + str(i)), vec[2][i])
+            return [instr, out] + list(inps)
+
+        return [do_line_i(i) for i in range(len(vec[0]))]
+    @staticmethod
+    def mk_fmt_instr(n, instrs, ins, outs):
+        return map(lambda v: CodeGenerator.format_instrs(v, instrs, ins, outs),
+                CodeGenerator.make_n_instrs(n, instrs, len(outs), len(ins)))
 
     def __init__(self, spec):
         self.instrs = list(sem.Instr.instrs)
@@ -96,6 +114,8 @@ def keep_trying(spec, example_gen, code_maker):
     while True:
         example = examples[-1]
         curr_code = code_maker(examples)
+        if not curr_code:
+            return False
         meaning = sem.read_from_parsed(curr_code)[-1]
         in_state = z3.And(*(i() == example[0][i] for i in example[0] if i() in meaning[2]))
         prog = sem.env_to_query(meaning)
@@ -108,6 +128,6 @@ if __name__ == "__main__":
     eis = list(envs_and_instrs("test.ptx"))
     ex = sem.get_examples(eis[-1][0])
     print(keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0])))
-    for i in CodeGenerator.make_n_instrs(2, list(sem.Instr.instrs), 1, 2):
+    for i in CodeGenerator.mk_fmt_instr(2, list(sem.Instr.instrs), ['a', 'b'], ['c']):
         print(i)
 
