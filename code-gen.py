@@ -3,16 +3,33 @@ import z3
 import parser as ptx
 from functools import reduce
 
+class RememberingIter:
+    def __init__(self, it):
+        self.it = it
+        self.acc = []
+        self.stopped = False
+    def __iter__(self):
+        if not self.stopped:
+            return self
+        return iter(self.acc)
+    def __next__(self):
+        try:
+            n = next(self.it)
+            self.acc.append(n)
+            return n
+        except StopIteration:
+            self.stopped = True
+            raise StopIteration
+
 class CodeGenerator:
     @staticmethod
     def n_p_k(n, k):
         if k == 1:
             return map(lambda x: [x], range(n))
-        return ([i] + j for i in range(n) for j in CodeGenerator.n_p_k(n, k - 1))
+        return ([i] + j for j in CodeGenerator.n_p_k(n, k - 1) for i in range(n))
     @staticmethod
     def cross_product(*its):
         def helper(l, r):
-            print(l, r)
             for i in l:
                 for j in r:
                     if type(i) == tuple:
@@ -25,8 +42,28 @@ class CodeGenerator:
                     else:
                         yield (i, j)
         return reduce(helper, its)
+    @staticmethod
+    def check_input_vec(input_vec, output, num_out_vars, num_in_vars, loc):
+        for var in input_vec:
+            if var < num_in_vars:
+                continue
+            if output[var - num_in_vars] < num_out_vars:
+                return False
+        return True
+    @staticmethod
+    def check_output(output_vec, num_out_vars):
+        return set(output_vec) <= set(range(num_out_vars))
+    @staticmethod
+    def make_n_instrs(n, instrs, n_outs, n_ins):
+        inst_gen = CodeGenerator.n_p_k(len(instrs), n)
+        out_gen = RememberingIter(filter(lambda o: CodeGenerator.check_output(o, n_outs), CodeGenerator.n_p_k(n_outs + 1, n)))
+        for insts in inst_gen :
+            for outs in out_gen:
+                p_ks = (filter(lambda i: CodeGenerator.check_input_vec(i, outs, n_outs, n_ins, idx), CodeGenerator.n_p_k(n + n_ins, agc - 1))\
+                        for idx in range(n) for agc in sem.Instr.instrs[instrs[insts[idx]]].argparser)
+                yield from ((insts, outs, i) for i in CodeGenerator.cross_product(*map(list, p_ks)))
+
     def __init__(self, spec):
-        print(spec)
         self.instrs = list(sem.Instr.instrs)
         self.ctrs = (0,)
         self.ins = list(spec[2])
@@ -71,8 +108,6 @@ if __name__ == "__main__":
     eis = list(envs_and_instrs("test.ptx"))
     ex = sem.get_examples(eis[-1][0])
     print(keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0])))
-    p1 = list(CodeGenerator.n_p_k(3, 4))
-    p2 = list(CodeGenerator.n_p_k(4, 4))
-    p3 = list(CodeGenerator.n_p_k(2, 4))
-    for i in CodeGenerator.cross_product(p1, p2, p3):
+    for i in CodeGenerator.make_n_instrs(2, list(sem.Instr.instrs), 1, 2):
         print(i)
+
