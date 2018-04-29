@@ -17,7 +17,7 @@ identifier = p.Group(prefix * (0, 1) + follow_sym)
 hexadecimal = "0" + p.CaselessLiteral('x') + p.Word(p.hexnums) + p.Literal('U') * (0, 1)
 octal = "0" + p.Word(''.join(map(str, range(8)))) + p.Literal('U') * (0, 1)
 binary = "0" + p.CaselessLiteral('b') + p.Word('01') + p.Literal('U') * (0, 1)
-decimal = literals_of(*(str(i) for i in range(1, 10))) + p.Word(''.join(map(str, range(10)))) * (0, 1) + p.Literal('U') * (0, 1)
+decimal = literals_of(*(str(i) for i in range(10))) + p.Word(''.join(map(str, range(10)))) * (0, 1) + p.Literal('U') * (0, 1)
 integer_literal = p.Group(hexadecimal | octal | binary | decimal)
 
 float_literal = p.Group("0" + p.CaselessLiteral('f') + p.Literal(p.hexnums) * 8)
@@ -103,6 +103,8 @@ except:
     pass
 
 if __name__ == "__main__":
+    from sys import argv
     statement.parseString("mul.hi.u32 a, b, c;")
-    test = list(handle_file('test.ptx'))
+    test = list(handle_file(argv[1]))
     print(test)
+    print(integer_literal.parseString('0'))

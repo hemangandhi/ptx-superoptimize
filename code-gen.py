@@ -134,9 +134,10 @@ def example_and_code_to_query(example, code):
 
 #BRUTE FORCE - slow, "works"
 def keep_trying(spec, example_gen, code_maker, max_len):
+    print('ml', max_len)
     examples = [next(example_gen)]
     curr_code = []
-    while len(code_maker) < max_len:
+    while len(code_maker) <= max_len:
         example = examples[-1]
         curr_code = code_maker(examples)
         if not curr_code:
