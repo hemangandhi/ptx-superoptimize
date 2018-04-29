@@ -35,12 +35,7 @@
 \bibitem{PTXDoc}
 Parallel thread execution isa version 6.1.
 
-\bibitem{nvvmGitHub}
-nvidia-compiler sdk.
-\newblock nvidia-compiler-sdk/nvvmir-samples, Mar 2014.
-
-\bibitem{NVIDIASlides}
-Mark Harris.
-\newblock Compiling parallel languages with the nvidia compiler sdk.
+\bibitem{GPUOcelot}
+a dynamic compilation framework for gpu computing.
 
 \end{thebibliography}

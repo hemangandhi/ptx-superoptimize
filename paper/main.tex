@@ -191,11 +191,231 @@ The GPUOcelot project \cite{GPUOcelot} provides
 a compiler framework perfectly suited for a super-optimizer
 to fit into.
 
-\section{Benchmarks}
+The project primarily aims to provide a JIT-compiler for CUDA
+so that CUDA can be launched on the fly. However, this goal
+leads to utilities for a super-optimiser, especially an object-oriented
+IR that can be parsed by any processing layers.
+
+A super-optimizer would be one of these intermediate passes.
+
+\section{The Program}
+
+The program was completed in python for rapid prototyping and testing.
+The algorithms, being extensible, should be ported to another language
+for speed (CUDA springs to mind due to the data-parallelism in many places)
+and tune-ups will be discussed as future work.
+
+There various key modules: a parser, a semantic interpreter, and a code-generator
+form the core program.
+
+\subsection{The Parsing Structures and Semantics}
+
+\texttt{pyparsing} is the main library this program rests on.
+Assuming just the instructions, the program can read and parse
+the most basic arithmetic instructions, handling a few hundred.
+
+Once the basic parsing is completed, the semantics are inferred from the program.
+The key structure used is an environment, a 4-tuple:
+\begin{itemize}
+    \item A map from output to a condition on input.
+    \item The set of inputs.
+    \item The set of outputs.
+    \item The set of all variables ``seen''.
+\end{itemize}
+
+Each instruction is also encoded as a parser for its arguments
+and a function that takes an environment and updates it to
+include the execution of the instruction.
+
+Generally, if the environment read in is $(M, I, O, V)$ and
+an instruction $o = f(T)$ (where $T$ is some set of inputs)
+is read, the environment is updated as follows:
+\begin{itemize}
+    \item $o \mapsto f(M(T))$ is added to the map (or $o$ is updated).
+        $M(T)$ is used in place of $T$ to propagate equations inferred
+        as the program is read.
+    \item $(T \setminus (V \cup \{o\})) \cup I$
+        This removes all variables assigned to before since they
+        cannot provide input to the program. Otherwise, unseen variables
+        and past inputs are considered inputs.
+    \item $(O \setminus T) \cup \{o\}$
+        We remove the inputs to this instruction from the output set of
+        the program since we assume that all outputs will not be re-used.
+        As a workaround, idempotent instructions may be used to produce the
+        output that is re-used. The addition of a simple \texttt{add.u32 actual\_out, temporary\_to\_be\_reused, 0;} would suffice.
+    \item $V \cup T \cup \{o\}$.
+        We maintain this for the second update above: it is indispensable to
+        know that variables have actually been seen in order to determine
+        which variables are new inputs.
+\end{itemize}
+
+To clarify, here is an example:
+\begin{lstlisting}
+add.u32 c, a, b;
+sub.u32 d, c, b;
+add.u32 e, f, g;
+\end{lstlisting}
+This means that the unsigned integer variables
+\texttt{a} through \texttt{f} are computed as follows:
+\begin{lstlisting}
+c = a + b;
+d = c - b;
+e = f + g;
+\end{lstlisting}
+It is clear that \texttt{d = a} and \texttt{c} is not really an
+output, more a temporary variable, seen through the lens of the third update
+rule above.
+
+This program is parsed into the following 4-tuple:
+\begin{align*}
+    (e \mapsto f + g, d \mapsto a + b - b), \\
+    \{a, b, c, f, g\}, \\
+    \{d, e\}, \\
+    \{a\ \text{through } f\}
+\end{align*}
+
+\subsection{Naive Code-generation}
+
+In order to generate every possible program, a brute-force
+enumeration is produced. We assume that each instruction
+produces only 1 output (this suffices for all instructions
+parsed so far).
+
+The first step of the brute-force approach is to try to satisfy the
+spec with an idempotent program that does not alter the variables.
+After this, all programs with at least as many instructions as the
+outputs provided are run through, adding instructions one at a time.
+
+This approach is incredibly naive: in synthesizing even two instruction
+programs, a lot of time is taken as every two-instruction program is
+checked without any pruning.
+
+We make this algorithm a little smarter by applying it to only one output
+at a time.
+
+\subsection{An Output-by-output Search}
+
+To search the graph of updates, we look at the program output-by-output.
+This does not require as many ``restarts'' as a naive traversal
+since the instructions and temporary variables synthesized for
+one output can be used for another.
+
+We illustrate the algorithm by running through it on the specification from above:
+\begin{align*}
+    (e \mapsto f + g, d \mapsto a + b - b), \\
+    \{a, b, c, f, g\}, \\
+    \{d, e\}, \\
+    \{a\ \text{through } f\}
+\end{align*}
+
+The output-by-output search arbitrarily begins by searching through
+all means of generating \texttt{e} and quickly finds \texttt{add.u32 e, f, g;}
+finishing its search.
+
+The search for \texttt{add.u32 d, a, 0;} is complicated by potential encoding
+troubles that will be mentioned later. Instead of producing the simple
+identity, the program complicates matters:
+\begin{lstlisting}
+sub.u32 t0, f, f;
+add.u32 d, a, t0;
+\end{lstlisting}
+This may be due to semantics in bit-vector theory that require
+further investigation.
+
+In order to guarantee that the program produced is in fact the shortest,
+the algorithm must be run on all the permutations of the output variables.
+Inductively, we can show that the search first generates the shortest
+program for an output. Then given the program on $n$ outputs, we search
+for the $n + 1^{st}$ output by using the specification of the program of
+$n$ outputs. Hence, given an order of outputs, we can be assured that program
+produced is the shortest. Hence, a search over all permutations guarantees the
+brevity of the program.
+
+\section{Benchmarks and Observations}
 
 
 
 \section{Future Work}
+
+This is organized by the general facet of the program that would be improved.
+The last subsections include other general comments and ideas, the first subsection
+focussing on implementation, the second on theory, and the final on other benchmarks.
+
+\subsection{Parsing}
+
+Currently, most of PTX is not even parsed. This is since straight-line
+code is the only facet supported.
+
+A future extension would not only support more instructions but also more
+of the structures in PTX. Conditional guards, branches, calls, directives,
+and special identifiers are either not supported or ignored.
+
+This limits capabilities in memory optimization. \cite{CUDALoops} suggests
+the advantages of also correctly laying memory out.
+
+Furthermore, loops are a key component of CUDA's usage, hence this program
+is heavily hindered in its usefulness by not treating loops and conditional
+structures. This is discussed more in the next sections.
+
+\subsection{Semantics}
+
+The semantics are lacking in two key ways: type information is not fully
+stored for any instruction and the ``environment'' structure discussed
+above is inflexible in certain cases.
+
+The lack of typing information makes it difficult to handle instructions such
+as \texttt{mul.wide}, where the input and output types vary. Branching instructions
+incur such troubles as well as a ``predicate'' type would have to be included.
+
+Furthermore, the environment structure would need to be reasoned about further
+in order to handle outputs being re-used. This information may have to be
+included in post-conditions.
+
+Additionally, for branching, remembering environments may aid the reading
+and understanding of a program.
+This may also allow a sort of ``divide-and-conquer'' approach, though programs
+so generated are optimal given the division of the input, so all divisions would
+have to be considered (much like how all permutations are currently considered).
+
+\subsection{Implementation}
+
+The implementation is in python. Other than documentation and obvious
+refactoring, the implementation should be ported for usability.
+
+Python is not only notoriously slow, but is harder to integrate in the
+NVCC framework. Hence, compiling with the super-optimiser could be made more
+streamlined. A framework such as \cite{GPUOcelot} the Ocelot project
+should be considered.
+
+Furthermore, for runtime improvements, other programming languages should be
+considered. In fact, the data-parallelism suggests that CUDA should be looked into
+as a language to implement the program in. The output-by-output algorithm
+could see permutations in parallel and a faster SAT-solver may be usable.
+
+\subsection{Theoretical}
+
+Currently, very few ideas from \cite{superopt} are used since it is
+unclear how to apply the graph search. The output-by-output algorithm is
+a step towards some of the LENS algorithm, however, backward generation
+and the pruning of prior programs are not used. It is unclear how to use
+them.
+
+In addition, by finding windows with tighter pre and post-conditions,
+the program may hope to find better code segments
+that work in the context of the current program.
+This would be very useful for CUDA programs given
+the conditional guards built into PTX: the preconditions
+might be able to be inferred from guards so that
+the program produced is better in the context
+of the larger code segment.
+
+However, the conditional hazards of CUDA -- that
+PTX instructions can be prevented from running
+at the instruction level, means that in order to
+optimise the bulk of the PTX ISA, conditional
+branching cannot be ignored. This would be
+a key extension on the original program as
+it is a limitation of the current implementation.
 
 \subsection{More Benchmarks}
 
@@ -223,29 +443,6 @@ among which may be (from \cite{hicuda}):
     \item Rys Polynomial Equation Solver
     \item Magnetic Resonance Imaging FHD
 \end{enumerate}
-
-\section{Milestones \& Timeline}
-
-In order to progress on this project over the semester,
-the following time-line would be paramount:
-\begin{itemize}
-    \item $20^{th}$ Feb.: Proposal received and reviewing starts.
-    \item $27^{th}$ Feb.: Finished installation of nvvm, hiCUDA, and other relevant tools. Download and finding relevant benchmarks.
-    \item $6^{th}$ Mar.: Successful encoding of a few bitwise PTX instructions. Testing to be done with samples from hacker's delight.
-    \item $13^{th}$ Mar.: A few more instructions.
-    \item $20^{th}$ Mar.: Research into conditional verification and implications on PTX.
-    \item $27^{th}$ Mar.: Some working conditional test cases.
-    \item $3^{rd}$ Apr.: More progress on conditional cases.
-    \item $10^{th}$ Apr.: Beginning to encode process larger benchmarks (like those from \cite{hicuda}).
-    \item $17^{th}$ Apr.: Debugging, understanding the implications of code size on the optimisation.
-    \item $24^{th}$ Apr.: Debugging, understanding the implications of code size on the optimisation. Time permitting, investigation into better heuristics for optimisation.
-\end{itemize}
-
-This may be ambitious depending on the complexities
-of PTX, so some of the larger benchmarks may not be
-fully tested against. The minimal hope is some
-optimisation of conditionally evaluated instructions
-and straight-line code.
 
 \section{References}
 

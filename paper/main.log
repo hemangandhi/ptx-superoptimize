@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.99992 (TeX Live 2015/Debian) (preloaded format=xelatex 2018.1.18)  19 FEB 2018 00:07
+This is XeTeX, Version 3.14159265-2.6-0.99992 (TeX Live 2015/Debian) (preloaded format=xelatex 2018.1.18)  29 APR 2018 17:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -686,25 +686,54 @@ File: se-ascii-print.def 2011/12/02 v1.10 stringenc: Printable ASCII characters
 
 
 ]
-Underfull \hbox (badness 1231) in paragraph at lines 156--163
+Underfull \hbox (badness 1231) in paragraph at lines 155--162
 []\T1/cmr/m/n/10 In the CUDA com-mu-nity, there is a ma-ture
  []
 
-[2]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 232.
 
- (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+Underfull \hbox (badness 1968) in paragraph at lines 184--187
+\T1/cmr/m/n/10 the model en-coded for the pur-poses of super-
+ []
+
+
+Underfull \hbox (badness 1062) in paragraph at lines 190--193
+\T1/cmr/m/n/10 The GPUO-celot project [[][]8[][]] pro-vides a com-piler
+ []
+
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 203.
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 210.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 232.
-
-Underfull \hbox (badness 3039) in paragraph at lines 233--234
-[]$\OT1/cmr/m/n/10 27[]$ \T1/cmr/m/n/10 Feb.: Fin-ished in-stal-la-tion of nvvm
-,
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 210.
+ [2]
+Underfull \hbox (badness 10000) in paragraph at lines 220--223
+[]\T1/cmr/m/n/10 Generally, if the en-vi-ron-ment read in is
  []
 
-(./main.bbl
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 324--324
+[]\T1/cmr/bx/n/14.4 Benchmarks and Ob-ser-va-
+ []
+
+
+Underfull \hbox (badness 2538) in paragraph at lines 346--349
+[]\T1/cmr/m/n/10 Furthermore, loops are a key com-po-nent of
+ []
+
+
+Underfull \hbox (badness 1005) in paragraph at lines 360--363
+[]\T1/cmr/m/n/10 Furthermore, the en-vi-ron-ment struc-ture would
+ []
+
+[4] (./main.bbl
 Underfull \hbox (badness 3769) in paragraph at lines 4--7
 []\T1/cmr/m/n/10 Tianyi David Han, Tarek S Ab-del-rah-man.
  []
@@ -724,29 +753,21 @@ Underfull \hbox (badness 2662) in paragraph at lines 30--34
 \T1/cmr/m/n/10 Thakur, Rastislav Bodik, Di-nakar Dhur-jati.
  []
 
-[3]
-Underfull \hbox (badness 10000) in paragraph at lines 39--41
-[]\T1/cmr/m/n/10 nvidia-compiler sdk.  nvidia-compiler-
- []
-
-)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 254.
- [4
-
-]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 254.
+) [5]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 438.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 438.
  (./main.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 254.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 254.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 254.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 438.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 438.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 438.
  ) 
 Here is how much of TeX's memory you used:
- 20849 strings out of 495579
- 366604 string characters out of 6187322
- 418463 words of memory out of 5000000
- 23803 multiletter control sequences out of 15000+600000
- 13940 words of font info for 37 fonts, out of 8000000 for 9000
+ 20875 strings out of 495579
+ 367265 string characters out of 6187322
+ 422798 words of memory out of 5000000
+ 23823 multiletter control sequences out of 15000+600000
+ 15787 words of font info for 40 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 62i,8n,56p,479b,452s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 62i,10n,56p,479b,872s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on main.pdf (4 pages).
+Output written on main.pdf (5 pages).

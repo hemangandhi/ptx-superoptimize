@@ -95,8 +95,8 @@ class CodeGenerator:
 
     def __init__(self, spec, init_code = []):
         self.using_examples = False
-        self.instrs = list(sem.Instr.instrs)
         self.ins = list(spec[2])
+        self.instrs = list(filter(lambda i: int(i[-2:]) == self.ins[0].size(), sem.Instr.instrs))
         self.outs = list(spec[1])
         self.len = 0
         self.curr_gen = CodeGenerator.generate_identities(self.ins, self.outs)
