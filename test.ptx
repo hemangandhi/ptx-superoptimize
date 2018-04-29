@@ -1,1 +1,2 @@
-sub.u32 b, e, a;
+add.u32 c, a, b;
+sub.u32 d, c, b;

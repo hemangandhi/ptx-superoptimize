@@ -102,6 +102,7 @@ def get_examples(ev):
         v = s.model()
         #values, output, input
         new_q, add_ex = yield v, ev[1], ev[2]
+        print(new_q)
         if add_ex:
             s.add(z3.Or(*(i() != v[i] for i in v)))
         if new_q != None:

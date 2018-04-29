@@ -84,14 +84,22 @@ class CodeGenerator:
     def mk_fmt_instr(n, instrs, ins, outs):
         return map(lambda v: CodeGenerator.format_instrs(v, instrs, ins, outs),
                 CodeGenerator.make_n_instrs(n, instrs, len(outs), len(ins)))
+    @staticmethod
+    def generate_identities(ins, outs):
+        for i in ins:
+            for o in outs:
+                for instr in sem.Instr.instrs:
+                    if 'add' in instr:
+                        yield [instr, str(o), str(i), '0', ';']
+
 
     def __init__(self, spec):
         self.using_examples = False
         self.instrs = list(sem.Instr.instrs)
         self.ins = list(spec[2])
         self.outs = list(spec[1])
-        self.len = 1
-        self.curr_gen = CodeGenerator.mk_fmt_instr(self.len, self.instrs, self.ins, self.outs)
+        self.len = 0
+        self.curr_gen = CodeGenerator.generate_identities(self.ins, self.outs)
     def __call__(self, examples):
         try:
             return next(self.curr_gen)
@@ -126,7 +134,7 @@ def example_and_code_to_query(example, code):
 def keep_trying(spec, example_gen, code_maker, max_len):
     examples = [next(example_gen)]
     curr_code = []
-    while len(code_maker) <= max_len:
+    while len(code_maker) < max_len:
         example = examples[-1]
         curr_code = code_maker(examples)
         print(curr_code)
@@ -144,9 +152,10 @@ def keep_trying(spec, example_gen, code_maker, max_len):
         except z3.z3types.Z3Exception:
             #LOL - I'm too dumb for strongly typing
             continue
+    return False
 
 if __name__ == "__main__":
     eis = list(envs_and_instrs("test.ptx"))
     ex = sem.get_examples(eis[-1][0])
-    print(keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0]), 2))
+    print('Ding!', keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0]), 2))
 
