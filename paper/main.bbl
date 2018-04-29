@@ -1,0 +1,46 @@
+\begin{thebibliography}{1}
+
+\bibitem{hicuda}
+{Tianyi David Han, Tarek S Abdelrahman}.
+\newblock {hiCUDA: High-Level GPGPU Programming}.
+\newblock {\em {IEEE} Transactions on Parallel and Distributed Systems}, 2011.
+
+\bibitem{CUDASynth}
+{Hanwoong Jung, Youngmin Yi, Soonhoi Ha}.
+\newblock {Automatic CUDA Code Synthesis Framework for Multicore CPU and GPU
+  Architectures}.
+\newblock {\em {PPAM}}, 2011.
+
+\bibitem{DataEquiv}
+{Rahul Sharma, Eric Schkufza, Berkley Chruchill, Alex Aiken}.
+\newblock {Data-Driven Equivalence Checking}.
+\newblock {\em {OOPSLA}}, 2013.
+
+\bibitem{SIMDSynth}
+{Gilles Barthe, Juan Manuel Crespo, Sumit Gulwani, C\'esar Kunz, Mark Marron}.
+\newblock {From Relational Verification to SIMD Loop Synthesis}.
+\newblock {\em {PPoPP}}, 2013.
+
+\bibitem{CUDALoops}
+{Ulysse Beaugnon, Antoine Pouille, Marc Pouzet, Jacques Pienaar, Albert Cohen}.
+\newblock {Optimization Space Pruning without Regrets}.
+\newblock {\em {ASPLOS}}, 2017.
+
+\bibitem{superopt}
+{Phitchaya Mangpo Phothilimthana, Aditya Thakur, Rastislav Bodik, Dinakar
+  Dhurjati}.
+\newblock {Scaling up Superoptimization}.
+\newblock {\em {ASPLOS}}, 2016.
+
+\bibitem{PTXDoc}
+Parallel thread execution isa version 6.1.
+
+\bibitem{nvvmGitHub}
+nvidia-compiler sdk.
+\newblock nvidia-compiler-sdk/nvvmir-samples, Mar 2014.
+
+\bibitem{NVIDIASlides}
+Mark Harris.
+\newblock Compiling parallel languages with the nvidia compiler sdk.
+
+\end{thebibliography}

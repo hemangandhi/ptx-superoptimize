@@ -1,0 +1,254 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{epsfig,endnotes}
+\usepackage{listings}
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{\Large \bf Compilers Project: PTX Super-optimization}
+\date{}
+\author{\rm{Heman\ Gandhi} Rutgers University}
+
+\begin{document}
+
+\bibliographystyle{unsrt}
+
+\maketitle
+
+\begin{abstract}
+In many up-and-coming fields such as deep learning and
+crypto-currencies, the SIMD parallelism of GPUs is paramount.
+Since the data are all that vary over the computation, GPUs
+perform well.
+
+That said, the GPU is fraught with complexities:
+the threads must synchronize with one another to the
+point where even divergent control flow can cause
+slow-downs.
+
+In handling this, the PTX assembly is structured rather
+differently from X86 and other common ISAs. This differences
+in structure are yet to be tackled by super-optimisers and
+this project hopes to remedy that.
+\end{abstract}
+
+\section{Introduction}
+
+This project hopes to address the lack of super-optimizers for
+PTX assemblies. In doing so, the hope is that specialized GPGPU
+programs may be further optimized automatically.
+
+The hope is to accept parallel compiler IR and
+covert it to super-optimal PTX. There are various challenges with
+this. Various projects
+seem to have tackled the conversion from serial code into CUDA at
+a higher-level, so it is likely that a super-optimizer may be more
+useful in conjunction with these other tools. \cite{hicuda} \cite{CUDASynth}
+
+At a finer granularity, loops have also been thoroughly studied,
+in and out of the GPGPU world: general equivalence checking \cite{DataEquiv},
+SIMD X86 code \cite{SIMDSynth}, and even the optimization of loops in CUDA
+\cite{CUDALoops}, have been investigated.
+
+However, these prior works are not at the granularity of the super-optimiser.
+Most of these optimisations handle higher-level data-dependencies and arrange
+CUDA kernels as their ``atomic blocks.'' In the same vein as recent X86
+super-optimization works \cite{superopt}, the hope is to optimise segments
+of PTX assembly to create the best possible code.
+
+\section{Related Works}
+
+There are two facets of the study of super-optimisers for
+CUDA and the synthesis of this delicate code. Firstly, a lot
+of progress has been made on high-level tools and it is possible
+that a few insights from them may be useful. Secondly, super-optimisers
+are not foreign to X86 and more common ISAs so much may be learned from
+their implementations.
+
+\subsection{Super-Optimisers}
+
+The key algorithm behind the super-optimiser \cite{superopt}
+is a context-aware graph search with various clever
+optimizations that minimize the number of redundant computations.
+These optimizations entail keeping the same items pruned:
+so if the search finds that a class of programs
+can be pruned, it keeps them pruned across all
+the relevant restarts and input refinements.
+
+% In addition, by finding windows with tighter pre and post-conditions,
+% the super-optimiser hopes to find better code segments
+% that work in the context of the current program.
+% This would be very useful for CUDA programs given
+% the conditional guards built into PTX: the preconditions
+% might be able to be inferred from guards so that
+% the program produced is better in the context
+% of the larger code segment.
+%
+% However, the conditional hazards of CUDA -- that
+% PTX instructions can be prevented from running
+% at the instruction level, means that in order to
+% optimise the bulk of the PTX ISA, conditional
+% branching cannot be ignored. This will have to be
+% a key extension on the original super-optimiser as
+% it is a limitation of the current implementation.
+
+Another interesting work looks into the use of X86
+SIMD instructions. It is quite different from simply
+optimising already SIMD PTX assembly, but would be
+useful to process serial IRs into even sub-optimal PTX code.
+The approach would be to relate parts of a loop,
+as in \cite{SIMDSynth}, so that the serial loop can be
+unrolled by a factor and that would allow loop-equivalence
+checkers to process the code.
+
+Similarly, loop equivalence checking could be implemented
+through the data-driven method suggested by \cite{DataEquiv}
+where linear algebra is used to solve for relations between
+the variables. These relations, when maintained over the loop,
+should lead to similar terminal states for equivalent loops.
+This may be useful in ensuring loop optimisations should
+they arise in the PTX super-optimiser.
+
+\subsection{GPGPU Synthesizers}
+
+In general, there are synthesizers for CUDA code.
+These synthesisers, however, focus primarily on loops
+and optimizations thereof. Their input and output formats
+are not compiler IRs and they do not focus on the
+granularity of instructions.
+
+\subsubsection{Optimizing CUDA Loops}
+
+In \cite{CUDALoops}, the interactions of nested loops are studied.
+The loops are optimized from pseudo-sketches that
+do not specify the implementation details of every
+loop, leaving vectorization, unrolling, and memory allocation
+as choices. The synthesizer then decides on the
+optimal reasonable choices by essentially trying
+each one with a dose of clever pruning. A cost
+function is given and any possible program is
+only fully evaluated if it could perform better
+than the bound.
+
+The cost model used to prune the search space
+may provide insights on optimising memory
+accesses, should that be tackled as a part of the
+project.
+
+Additionally, many of the benchmarks provided in
+the paper are likely relevant for optimising
+even straight-line PTX.
+
+\subsubsection{Alternative Inputs for CUDA Synthesis}
+
+Two approaches have also already looked into
+better approaches to user-input for CUDA synthesis.
+
+In the CUDA community, there is a mature OpenMP-based
+system \cite{hicuda} that allows programmers to
+convert sequential code to parallel by helping the
+compiler through domain-specific directives.
+This approach does not offer many insights into
+synthesis algorithms. However, it provides useful
+benchmarks with a variety of algorithms.
+
+Another input format simply specifies that data dependences
+between kernels and optimises their layout.
+\cite{CUDASynth} Similar to the above, this does not
+offer too many insights into the synthesis searches
+needed to super-optimise PTX, but samples the
+same benchmarks as above so would be a good resource
+to compare against.
+
+\subsection{Nvidia Resources}
+
+Various resources from Nvidia and other researchers
+are relevant to the project:
+to encode the ISA and further understand the format
+of the input.
+
+\subsubsection{PTX Semantics}
+
+\cite{PTXDoc} explains the internals of the PTX
+assembly including the semantics of various
+instructions.
+
+This is paramount to optimisation as it is
+be the model encoded for the purposes of
+super-optimisation.
+
+\subsubsection{GPUOcelot}
+
+The GPUOcelot project \cite{GPUOcelot} provides
+a compiler framework perfectly suited for a super-optimizer
+to fit into.
+
+\section{Benchmarks}
+
+
+
+\section{Future Work}
+
+\subsection{More Benchmarks}
+
+Hacker's delight and other small segments of
+straight-line code will likely be the first
+victims of super-optimisation to test the
+encoding of the PTX ISA.
+
+Most useful benchmarks would arise from the related works aforementioned:
+the hiCUDA \cite{hicuda} framework's tests and tests
+from the CUDA loop optimiser \cite{CUDASynth} would likely
+be the final benchmarks.
+
+The super-optimiser should take hiCUDA or otherwise
+well-produced CUDA code and optimise it for
+a measurable performance increase.
+These algorithms span a variety of problems and uses,
+among which may be (from \cite{hicuda}):
+\begin{enumerate}
+    \item Black-Scholes Option Pricing
+    \item Matrix Multiplication
+    \item N-body Simulation.
+    \item Coulombic Potential
+    \item Sum of Absolute Differences
+    \item Rys Polynomial Equation Solver
+    \item Magnetic Resonance Imaging FHD
+\end{enumerate}
+
+\section{Milestones \& Timeline}
+
+In order to progress on this project over the semester,
+the following time-line would be paramount:
+\begin{itemize}
+    \item $20^{th}$ Feb.: Proposal received and reviewing starts.
+    \item $27^{th}$ Feb.: Finished installation of nvvm, hiCUDA, and other relevant tools. Download and finding relevant benchmarks.
+    \item $6^{th}$ Mar.: Successful encoding of a few bitwise PTX instructions. Testing to be done with samples from hacker's delight.
+    \item $13^{th}$ Mar.: A few more instructions.
+    \item $20^{th}$ Mar.: Research into conditional verification and implications on PTX.
+    \item $27^{th}$ Mar.: Some working conditional test cases.
+    \item $3^{rd}$ Apr.: More progress on conditional cases.
+    \item $10^{th}$ Apr.: Beginning to encode process larger benchmarks (like those from \cite{hicuda}).
+    \item $17^{th}$ Apr.: Debugging, understanding the implications of code size on the optimisation.
+    \item $24^{th}$ Apr.: Debugging, understanding the implications of code size on the optimisation. Time permitting, investigation into better heuristics for optimisation.
+\end{itemize}
+
+This may be ambitious depending on the complexities
+of PTX, so some of the larger benchmarks may not be
+fully tested against. The minimal hope is some
+optimisation of conditionally evaluated instructions
+and straight-line code.
+
+\section{References}
+
+\bibliography{sample}
+
+\end{document}

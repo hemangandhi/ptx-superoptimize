@@ -2,6 +2,7 @@ import semantics as sem
 import z3
 import parser as ptx
 from functools import reduce
+from itertools import permutations
 
 class RememberingIter:
     def __init__(self, it):
@@ -59,7 +60,7 @@ class CodeGenerator:
         return set(output_vec) >= set(range(num_out_vars))
     @staticmethod
     def make_n_instrs(n, instrs, n_outs, n_ins):
-        inst_gen = CodeGenerator.n_p_k(len(instrs), n)
+        inst_gen = RememberingIter(CodeGenerator.n_p_k(len(instrs), n))
         out_gen = RememberingIter(filter(lambda o: CodeGenerator.check_output(o, n_outs), CodeGenerator.n_p_k(n_outs + 1, n)))
         for insts in inst_gen :
             for outs in out_gen:
@@ -90,25 +91,25 @@ class CodeGenerator:
             for o in outs:
                 for instr in sem.Instr.instrs:
                     if 'add' in instr:
-                        yield [instr, str(o), str(i), '0', ';']
+                        yield [[instr, str(o), str(i), '0', ';']]
 
-
-    def __init__(self, spec):
+    def __init__(self, spec, init_code = []):
         self.using_examples = False
         self.instrs = list(sem.Instr.instrs)
         self.ins = list(spec[2])
         self.outs = list(spec[1])
         self.len = 0
         self.curr_gen = CodeGenerator.generate_identities(self.ins, self.outs)
+        self.init_code = init_code
     def __call__(self, examples):
         try:
-            return next(self.curr_gen)
+            return self.init_code + next(self.curr_gen)
         except StopIteration:
-            self.len += 1
-            print('cgl', self.len)
+            self.len = max(self.len + 1, len(self.outs))
             self.curr_gen = CodeGenerator.mk_fmt_instr(self.len, self.instrs, self.ins, self.outs)
+            print('cgl', self.len)
             #I'll be damned if this ever stops iteration.
-            return next(self.curr_gen)
+            return self.init_code + next(self.curr_gen)
     def __len__(self):
         return self.len
 
@@ -131,20 +132,23 @@ def example_and_code_to_query(example, code):
     out_state = z3.And(*(i() == example[0][i] for i in example[0] if i() in meaning[1]))
     return z3.Implies(z3.And(sem.env_to_query(meaning), in_state), out_state)
 
+#BRUTE FORCE - slow, "works"
 def keep_trying(spec, example_gen, code_maker, max_len):
     examples = [next(example_gen)]
     curr_code = []
     while len(code_maker) < max_len:
         example = examples[-1]
         curr_code = code_maker(examples)
-        print(curr_code)
         if not curr_code:
             return False
         try:
-            meaning = sem.read_from_parsed(curr_code)[-1]
+            meaning = sem.read_from_parsed(curr_code)
+            meaning = meaning[-1]
             in_state = z3.And(*(i() == example[0][i] for i in example[0] if i() in meaning[2]))
             prog = sem.env_to_query(meaning)
-            examples.append(example_gen.send((z3.And(spec, z3.Not(prog)), code_maker.using_examples)))
+            print('cc', curr_code)
+            print('specs', spec, 'XOR', prog)
+            examples.append(example_gen.send((z3.Xor(spec, prog), code_maker.using_examples)))
         except StopIteration:
             #this means that the example generator couldn't make an example
             #the code matches the spec
@@ -154,8 +158,27 @@ def keep_trying(spec, example_gen, code_maker, max_len):
             continue
     return False
 
+def output_by_output(spec_env, max_len):
+    tot_outs = len(spec_env[1])
+    prg = []
+    min_prg = []
+    for outs in permutations(spec_env[1]):
+        curr_spec = ({}, set(), spec_env[2], spec_env[3] - spec_env[1])
+        prg = []
+        for n, out in enumerate(outs):
+            curr_spec = sem.union_envs(curr_spec, ({out: spec_env[0][out]}, {out}, {out} | spec_env[2]))
+            prg_spec = sem.read_from_parsed(prg)[-1]
+            cg_spec = sem.union_envs(curr_spec, ({}, set(), prg_spec[3], prg_spec[3]))
+            cg_spec = (cg_spec[0], {out}, cg_spec[2], cg_spec[3])
+            cg = CodeGenerator(cg_spec, prg)
+            prg = keep_trying(sem.env_to_query(curr_spec), sem.get_examples(curr_spec), cg, max_len - (tot_outs - n) + 1)
+            if not prg:
+                break
+        else:
+            if len(prg) < len(min_prg) or len(min_prg) == 0:
+                min_prg = prg
+    return min_prg
+
 if __name__ == "__main__":
     eis = list(envs_and_instrs("test.ptx"))
-    ex = sem.get_examples(eis[-1][0])
-    print('Ding!', keep_trying(sem.env_to_query(eis[-1][0]), ex, CodeGenerator(eis[-1][0]), 2))
-
+    print('Ding!', output_by_output(eis[-1][0], len(eis) - 1))

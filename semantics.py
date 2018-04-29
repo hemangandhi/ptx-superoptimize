@@ -57,7 +57,7 @@ def mk_for_all_types(prefix, parser, call_on_env, argparser, types = ptx.types):
     for i in ptx.all_concats([prefix], types):
         Instr(i, parser, call_on_env, argparser, int(i[-2:]))
 
-def dict_with_upd(d, upd, outs, ins):
+def dict_with_upd(d, upd, outs, ins, e_o = set()):
     only_literals = lambda l: type(l) == z3.BitVecRef
 
     outs = set(filter(only_literals, outs))
@@ -66,7 +66,7 @@ def dict_with_upd(d, upd, outs, ins):
     r.update(upd)
     #new out = old out - inputs + new outs
     #new in = inputs - old out - new outs + old in
-    return (r, (d[1] - ins) | outs, d[2] | (ins - d[3] - outs), d[3] | outs | ins)
+    return (r, (d[1] - ins) | outs, d[2] | (ins - d[3] - outs), d[3] | outs | ins | e_o)
 
 mk_for_all_types('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) + ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
@@ -76,8 +76,8 @@ mk_for_all_types('mul.hi', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 mk_for_all_types('mul.lo', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
-        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, types = [i for i in ptx.types if '64' not in i])
+# mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
+#         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, types = [i for i in ptx.types if '64' not in i])
 mk_for_all_types('div', ptx.div, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) / ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 
@@ -96,17 +96,26 @@ def env_to_query(env):
     return z3.And(*(i == env[0][i] for i in env[1]))
 
 def get_examples(ev):
+    eq = [env_to_query(ev)]
     s = z3.Solver()
-    s.add(env_to_query(ev))
+    s.add(eq)
     while s.check() == z3.sat:
         v = s.model()
+        print('ex', v)
         #values, output, input
-        new_q, add_ex = yield v, ev[1], ev[2]
-        print(new_q)
+        t = yield v, ev[1], ev[2]
+        if t is None: continue
+        new_q, add_ex = t
         if add_ex:
-            s.add(z3.Or(*(i() != v[i] for i in v)))
+            eq.append(z3.Or(*(i() != v[i] for i in v)))
         if new_q != None:
-            s.add(new_q)
+            eq.append(new_q)
+        s.reset()
+        for e in eq:
+            s.add(e)
+
+def union_envs(e1, e2):
+    return dict_with_upd(e1, *e2)
 
 if __name__ == "__main__":
     env = read_file("test.ptx")
