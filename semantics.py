@@ -101,8 +101,9 @@ def get_examples(ev):
     while s.check() == z3.sat:
         v = s.model()
         #values, output, input
-        new_q = yield v, ev[1], ev[2]
-        s.add(z3.Or(*(i() != v[i] for i in v)))
+        new_q, add_ex = yield v, ev[1], ev[2]
+        if add_ex:
+            s.add(z3.Or(*(i() != v[i] for i in v)))
         if new_q != None:
             s.add(new_q)
 
