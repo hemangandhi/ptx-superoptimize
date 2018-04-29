@@ -180,5 +180,6 @@ def output_by_output(spec_env, max_len):
     return min_prg
 
 if __name__ == "__main__":
-    eis = list(envs_and_instrs("test.ptx"))
+    from sys import argv
+    eis = list(envs_and_instrs(argv[1]))
     print('Ding!', output_by_output(eis[-1][0], len(eis) - 1))

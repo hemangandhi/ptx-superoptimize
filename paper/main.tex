@@ -274,6 +274,9 @@ This program is parsed into the following 4-tuple:
     \{a\ \text{through } f\}
 \end{align*}
 
+The current implementation uses the z3 solver and encodes the above in
+bit-vector theory to capture the nature of the inputs.
+
 \subsection{Naive Code-generation}
 
 In order to generate every possible program, a brute-force
@@ -377,6 +380,9 @@ This may also allow a sort of ``divide-and-conquer'' approach, though programs
 so generated are optimal given the division of the input, so all divisions would
 have to be considered (much like how all permutations are currently considered).
 
+The program can also expand by modelling relevant parts in the theory of arrays
+or floating-point theory.
+
 \subsection{Implementation}
 
 The implementation is in python. Other than documentation and obvious
@@ -416,6 +422,18 @@ optimise the bulk of the PTX ISA, conditional
 branching cannot be ignored. This would be
 a key extension on the original program as
 it is a limitation of the current implementation.
+
+Additionally, the output-by-output processing can be
+optimized. Certain outputs are clearly disjoint: finding
+one would not aid in finding the other. In theory, by
+trying to synthesize all pairs of outputs in either order,
+we can determine which outputs are disjoint. This could let
+us dramatically reduce the number of candidate programs.
+The efficacy of this optimization relies on the idea that
+if a pair of outputs is disjoint then one of the outputs
+is disjoint to all outputs the other is not disjoint to.
+Non-disjointness is best viewed in this usage as an equivalence
+relation and disjointness its negation, verifying the above.
 
 \subsection{More Benchmarks}
 
