@@ -1,0 +1,3 @@
+mul.hi.u32 e, a, b;
+mul.lo.u32 f, a, b;
+div.u32 g, e, f;

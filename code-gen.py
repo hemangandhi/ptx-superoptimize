@@ -134,7 +134,6 @@ def example_and_code_to_query(example, code):
 
 #BRUTE FORCE - slow, "works"
 def keep_trying(spec, example_gen, code_maker, max_len):
-    print('ml', max_len)
     examples = [next(example_gen)]
     curr_code = []
     while len(code_maker) <= max_len:
@@ -147,8 +146,8 @@ def keep_trying(spec, example_gen, code_maker, max_len):
             meaning = meaning[-1]
             in_state = z3.And(*(i() == example[0][i] for i in example[0] if i() in meaning[2]))
             prog = sem.env_to_query(meaning)
-            print('cc', curr_code)
-            print('specs', spec, 'XOR', prog)
+            # print('cc', curr_code)
+            # print('specs', spec, 'XOR', prog)
             examples.append(example_gen.send((z3.Xor(spec, prog), code_maker.using_examples)))
         except StopIteration:
             #this means that the example generator couldn't make an example
@@ -180,7 +179,67 @@ def output_by_output(spec_env, max_len):
                 min_prg = prg
     return min_prg
 
+def get_out_equiv_classes(spec_env, max_len):
+    eq_classes = {o: {o} for o in spec_env[1]}
+    seen = set()
+    for o1 in spec_env[1]:
+        for o2 in spec_env[1]:
+            if o1 == o2 or {o1, o2} <= seen:
+                continue
+
+            #gen o1 then o2
+            curr_spec = ({}, set(), spec_env[2], spec_env[3] - spec_env[1])
+            curr_spec = sem.union_envs(curr_spec, ({o1: spec_env[0][o1]}, {o1}, {o1} | spec_env[2]))
+            cg_spec = (curr_spec[0], {o1}, curr_spec[2], curr_spec[3])
+            cg = CodeGenerator(cg_spec)
+            prg1 = keep_trying(sem.env_to_query(curr_spec), sem.get_examples(curr_spec), cg, max_len - 1)
+
+            curr_spec = sem.union_envs(curr_spec, ({o2: spec_env[0][o2]}, {o2}, {o2} | spec_env[2]))
+            prg_spec = sem.read_from_parsed(prg1)[-1]
+            cg_spec = sem.union_envs(curr_spec, ({}, set(), prg_spec[3], prg_spec[3]))
+            cg_spec = (cg_spec[0], {o2}, cg_spec[2], cg_spec[3])
+            cg = CodeGenerator(cg_spec, prg1)
+            prg2 = keep_trying(sem.env_to_query(curr_spec), sem.get_examples(curr_spec), cg, max_len - len(prg1))
+
+            #o2 then o1
+            curr_spec = ({}, set(), spec_env[2], spec_env[3] - spec_env[1])
+            curr_spec = sem.union_envs(curr_spec, ({o2: spec_env[0][o2]}, {o2}, {o2} | spec_env[2]))
+            cg_spec = (curr_spec[0], {o2}, curr_spec[2], curr_spec[3])
+            cg = CodeGenerator(cg_spec)
+            prg3 = keep_trying(sem.env_to_query(curr_spec), sem.get_examples(curr_spec), cg, max_len - 1)
+
+            curr_spec = sem.union_envs(curr_spec, ({o1: spec_env[0][o1]}, {o1}, {o1} | spec_env[2]))
+            prg_spec = sem.read_from_parsed(prg3)[-1]
+            cg_spec = sem.union_envs(curr_spec, ({}, set(), prg_spec[3], prg_spec[3]))
+            cg_spec = (cg_spec[0], {o1}, cg_spec[2], cg_spec[3])
+            cg = CodeGenerator(cg_spec, prg3)
+            prg4 = keep_trying(sem.env_to_query(curr_spec), sem.get_examples(curr_spec), cg, max_len - len(prg3))
+
+            if len(prg4) != len(prg2):
+                eq_classes[o2].add(o1)
+                eq_classes[o1].add(o2)
+            seen.add(o1)
+            seen.add(o2)
+    return eq_classes
+
+def use_equiv_outs(spec_env, max_len):
+    classes = get_out_equiv_classes(spec_env, max_len)
+    print('classes', classes)
+    fin_prg = []
+    seen = set()
+    for i in classes:
+        if i in seen:
+            continue
+
+        seen |= classes[i]
+        class_spec = ({o: spec_env[0][o] for o in classes[i]}, classes[i], spec_env[2], spec_env[3])
+        prg = output_by_output(class_spec, max_len)
+        if not prg:
+            return False
+        fin_prg += prg
+    return fin_prg
+
 if __name__ == "__main__":
     from sys import argv
     eis = list(envs_and_instrs(argv[1]))
-    print('Ding!', output_by_output(eis[-1][0], len(eis) - 1))
+    print('Dong!', use_equiv_outs(eis[-1][0], len(eis) - 1))

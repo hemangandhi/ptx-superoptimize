@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.99992 (TeX Live 2015/Debian) (preloaded format=xelatex 2018.1.18)  29 APR 2018 18:21
+This is XeTeX, Version 3.14159265-2.6-0.99992 (TeX Live 2015/Debian) (preloaded format=xelatex 2018.1.18)  29 APR 2018 19:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -719,20 +719,17 @@ Underfull \hbox (badness 10000) in paragraph at lines 230--233
  []
 
 [3]
-Underfull \hbox (badness 10000) in paragraph at lines 337--337
+Underfull \hbox (badness 10000) in paragraph at lines 330--330
 []\T1/cmr/bx/n/14.4 Benchmarks and Ob-ser-va-
  []
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-Underfull \hbox (badness 2538) in paragraph at lines 359--362
+Underfull \hbox (badness 2538) in paragraph at lines 352--355
 []\T1/cmr/m/n/10 Furthermore, loops are a key com-po-nent of
  []
 
 
-Underfull \hbox (badness 1005) in paragraph at lines 373--376
+Underfull \hbox (badness 1005) in paragraph at lines 366--369
 []\T1/cmr/m/n/10 Furthermore, the en-vi-ron-ment struc-ture would
  []
 
@@ -757,15 +754,15 @@ Underfull \hbox (badness 2662) in paragraph at lines 30--34
  []
 
 )
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 464.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 468.
  [6
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 464.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 468.
  (./main.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 464.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 464.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 464.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 468.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 468.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 468.
  ) 
 Here is how much of TeX's memory you used:
  20875 strings out of 495579

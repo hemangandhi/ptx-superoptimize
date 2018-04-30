@@ -101,7 +101,6 @@ def get_examples(ev):
     s.add(eq)
     while s.check() == z3.sat:
         v = s.model()
-        print('ex', v)
         #values, output, input
         t = yield v, ev[1], ev[2]
         if t is None: continue
