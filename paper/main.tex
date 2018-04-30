@@ -346,6 +346,9 @@ Hence, in $o^2$ time, we can know the equivalence classes for $o$ outputs.
 This leads to fewer permutations being checked in the synthesis of the entire
 program.
 
+The example above is composed of two disjoint outputs, $\{d, e\}$, so the program
+can process them separately to good effect.
+
 \section{Benchmarks and Observations}
 
 %This is slow!
@@ -362,7 +365,14 @@ of this.
 The program ``many-classes'' demonstrates how the classes optimization is, indeed,
 an optimization with palpable speed-up.
 
-The program ``id'' demonstrates the identities.
+The program ``id'' demonstrates the identities: so that addition with 0, subtraction
+and equivalent redundancies are eliminated.
+
+\texttt{xor}, \texttt{and}, and \texttt{or} are supported as demonstrated by
+``xor-and-or''.
+
+``paper-example'' is the example above (so that the contents mentioned here can
+be verified).
 
 \section{Future Work}
 

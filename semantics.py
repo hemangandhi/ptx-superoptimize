@@ -72,20 +72,20 @@ mk_for_all_types('add', ptx.add, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 mk_for_all_types('sub', ptx.sub, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) - ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.hi', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(63, 32, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
-        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-mk_for_all_types('mul.lo', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
-      {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
+# mk_for_all_types('mul.hi', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(63, 32, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
+#         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
+# mk_for_all_types('mul.lo', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
+#       {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
 # mk_for_all_types('mul.wide', ptx.mul, lambda ag, ev: dict_with_upd(ev, {ag[0]: z3.Extract(31, 0, z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[1], ag[1])) * z3.Concat(z3.BitVecVal(0, 32), ev[0].get(ag[2], ag[2])))}, [ag[0]], [ag[1], ag[2]]),
 #         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, types = [i for i in ptx.types if '64' not in i])
 mk_for_all_types('div', ptx.div, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) / ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))})
-# mk_for_all_types('and', ptx.and_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) & ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
-#         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
-# mk_for_all_types('or', ptx.or_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) & ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
-#         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
-# mk_for_all_types('xor', ptx.xor_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) & ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
-#         {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
+mk_for_all_types('and', ptx.and_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) & ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
+        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
+mk_for_all_types('or', ptx.or_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) | ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
+        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
+mk_for_all_types('xor', ptx.xor_instr, lambda ag, ev: dict_with_upd(ev, {ag[0]: ev[0].get(ag[1], ag[1]) ^ ev[0].get(ag[2], ag[2])}, [ag[0]], [ag[1], ag[2]]),
+        {3: ((ptx.identifier, ptx.integer_literal), (ptx.integer_literal, True), (ptx.integer_literal, True))}, ptx.pred_types)
 
 def read_from_parsed(strs):
     def process_instr(env, instr):
