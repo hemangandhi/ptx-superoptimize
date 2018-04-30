@@ -83,23 +83,6 @@ so if the search finds that a class of programs
 can be pruned, it keeps them pruned across all
 the relevant restarts and input refinements.
 
-% In addition, by finding windows with tighter pre and post-conditions,
-% the super-optimiser hopes to find better code segments
-% that work in the context of the current program.
-% This would be very useful for CUDA programs given
-% the conditional guards built into PTX: the preconditions
-% might be able to be inferred from guards so that
-% the program produced is better in the context
-% of the larger code segment.
-%
-% However, the conditional hazards of CUDA -- that
-% PTX instructions can be prevented from running
-% at the instruction level, means that in order to
-% optimise the bulk of the PTX ISA, conditional
-% branching cannot be ignored. This will have to be
-% a key extension on the original super-optimiser as
-% it is a limitation of the current implementation.
-
 Another interesting work looks into the use of X86
 SIMD instructions. It is quite different from simply
 optimising already SIMD PTX assembly, but would be
@@ -234,11 +217,11 @@ is read, the environment is updated as follows:
     \item $o \mapsto f(M(T))$ is added to the map (or $o$ is updated).
         $M(T)$ is used in place of $T$ to propagate equations inferred
         as the program is read.
-    \item $(T \setminus (V \cup \{o\})) \cup I$
+    \item $(T \setminus (V \cup \{o\})) \cup I$.
         This removes all variables assigned to before since they
         cannot provide input to the program. Otherwise, unseen variables
         and past inputs are considered inputs.
-    \item $(O \setminus T) \cup \{o\}$
+    \item $(O \setminus T) \cup \{o\}$.
         We remove the inputs to this instruction from the output set of
         the program since we assume that all outputs will not be re-used.
         As a workaround, idempotent instructions may be used to produce the
@@ -316,7 +299,7 @@ all means of generating \texttt{e} and quickly finds \texttt{add.u32 e, f, g;}
 finishing its search.
 
 The search for \texttt{add.u32 d, a, 0;}
-terminates in the idempotent generation phase and is fairly quickly.
+terminates in the idempotent generation phase and is fairly quick.
 
 In order to guarantee that the program produced is in fact the shortest,
 the algorithm must be run on all the permutations of the output variables.
@@ -349,7 +332,7 @@ program.
 The example above is composed of two disjoint outputs, $\{d, e\}$, so the program
 can process them separately to good effect.
 
-\section{Benchmarks and Observations}
+\section{Benchmarks, Observations, and Evaluation}
 
 %This is slow!
 One instruction processing and the processing of identities is not only fast
@@ -373,6 +356,33 @@ and equivalent redundancies are eliminated.
 
 ``paper-example'' is the example above (so that the contents mentioned here can
 be verified).
+
+\subsection{Relating to the Problem Definition}
+
+The problem this work intended to solve was to provide a super-optimizer for PTX.
+
+This is certainly a start, but by no means a definitive end. There is much still left to
+be learned. In fact, the heuristic currently used is naive and may be futile. The nature
+of PTX is not considered: only the length of the assembly. This would certainly correlate
+with speed intuitively, but there is no verification of this claim. In fact, confounding
+variables such as memory arrangement, the loops, and even instructions themselves are not
+considered.
+
+\subsection{Takeaways}
+
+There were two takeaways: that alternatives should be considered sooner and that
+the search space always pruned more.
+
+The Ocelot project \cite{GPUOcelot} showed that though a project may seem promising,
+its maintenance may not exist. Building the project proved to be impossible as the versions
+only aligned when the project was built and that astronomical event has passed.
+In the future, less time should be spent behind one project, especially if it does not build.
+
+%Start sooner!
+The intractability of the naive search sprang up surprisingly quickly: even generating 2
+instruction programs proves to be a 2 minute chore. The output-by-output search definitely
+offers a large speed-up. It is interesting that some of the insights that help are rather
+simple.
 
 \section{Future Work}
 
@@ -491,6 +501,10 @@ among which may be (from \cite{hicuda}):
     \item Rys Polynomial Equation Solver
     \item Magnetic Resonance Imaging FHD
 \end{enumerate}
+
+With the above testing, we may be able to verify whether our heuristic of program
+length is admissible. This would be another main area of future work where
+benchmarks would be invaluable.
 
 \section{References}
 
