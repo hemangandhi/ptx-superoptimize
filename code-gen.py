@@ -224,7 +224,6 @@ def get_out_equiv_classes(spec_env, max_len):
 
 def use_equiv_outs(spec_env, max_len):
     classes = get_out_equiv_classes(spec_env, max_len)
-    print('classes', classes)
     fin_prg = []
     seen = set()
     for i in classes:

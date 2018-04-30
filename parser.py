@@ -65,6 +65,11 @@ neg = literals_of(*all_concats(["neg"], [i for i in types if i[1] == 's']
     + all_concats(['.ftz', ''], ['.f32']) + ['.f64']))
 popc = literals_of(*all_concats(["popc"], [".b32", ".b64"]))
 
+pred_types = [".b16", ".b32", ".b64"]
+and_instr = literals_of(*all_concats(["and"], pred_types))
+or_instr = literals_of(*all_concats(["or"], pred_types))
+xor_instr = literals_of(*all_concats(["xor"], pred_types))
+
 float_types = ['.finite', '.infinite', '.number', '.notanumber', '.normal', '.subnormal']
 float_testp = literals_of(*all_concats(["testp"], float_types, ['.f32', '.f64']))
 copysign = literals_of(*all_concats(['copysign'], ['.f32', '.f64']))
@@ -77,6 +82,7 @@ stype = all_concats(['.u', '.s', '.b'], ['16', '32', '64']) + ['.f32', '.f64']
 set_instr = literals_of(*all_concats(['set'], cmp_op, bool_op, ['', '.ftz'], dtype, stype))
 
 instruction = add | sub | mul | mad | div | rem\
+        | and_instr | or_instr | xor_instr\
         | abs_instr | neg | popc | float_testp | copysign\
         | set_instr
 label = p.Group(identifier + ':')

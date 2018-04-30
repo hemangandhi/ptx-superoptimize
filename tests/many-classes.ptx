@@ -1,0 +1,4 @@
+add.u32 t, a, b;
+sub.u32 c, t, b;
+mul.hi.u32 e, f, g;
+div.u32 h, i, j;

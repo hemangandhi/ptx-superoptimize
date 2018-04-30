@@ -1,0 +1,3 @@
+xor.b32 a, b, c;
+and.b32 d, e, f;
+or.b32  g, h, i;

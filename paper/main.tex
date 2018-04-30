@@ -329,18 +329,22 @@ brevity of the program.
 
 \subsection{Disjoint Outputs: an Optimization}
 
-Additionally, the output-by-output processing can be
-optimized. Certain outputs are clearly disjoint: finding
-one would not aid in finding the other. In theory, by
-trying to synthesize all pairs of outputs in either order,
-we can determine which outputs are disjoint. This could let
-us dramatically reduce the number of candidate programs.
-The efficacy of this optimization relies on the idea that
-if a pair of outputs is disjoint then one of the outputs
-is disjoint to all outputs the other is not disjoint to.
-Non-disjointness is best viewed in this usage as an equivalence
-relation and disjointness its negation, verifying the above.
+We call two outputs disjoint if and only if the production of
+one does not aid that of the other. The negation of this relation:
+two outputs being non-disjoint if the production of one helps the
+production of the other is an equivalence relation on the set of outputs.
+Hence, we can take equivalence classes of the set of outputs.
+Within an equivalence class, the permutation of outputs produced may be
+critical, but by definition, the order in which each class is synthesized
+does not matter.
 
+We determine disjointness quickly: two outputs are disjoint if and only if
+the program that produces them in one order is the same length as that that
+produces them in the other order.
+
+Hence, in $o^2$ time, we can know the equivalence classes for $o$ outputs.
+This leads to fewer permutations being checked in the synthesis of the entire
+program.
 
 \section{Benchmarks and Observations}
 
@@ -352,7 +356,13 @@ From observation, it appears that multiplication is the slowest and most
 difficult to process instruction. This may be due to the semantics of the
 encoding. For a \texttt{mul.lo.u32 d, x, y;} for instance, the following SAT query
 is produced: \texttt{Extract(0 to 32, Zero-Extend(x, 64), Zero-Extend(y, 64)) == d}.
-This query may be much slower to process.
+This query may be much slower to process. The test case ``long-mul'' is an example
+of this.
+
+The program ``many-classes'' demonstrates how the classes optimization is, indeed,
+an optimization with palpable speed-up.
+
+The program ``id'' demonstrates the identities.
 
 \section{Future Work}
 
