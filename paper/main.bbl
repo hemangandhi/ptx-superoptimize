@@ -34,8 +34,11 @@
 
 \bibitem{PTXDoc}
 Parallel thread execution isa version 6.1.
+\newblock
+  \url{http://docs.nvidia.com/cuda/parallel-thread-execution/index.html}.
 
 \bibitem{GPUOcelot}
 a dynamic compilation framework for gpu computing.
+\newblock \url{http://gpuocelot.gatech.edu/}.
 
 \end{thebibliography}
