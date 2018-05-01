@@ -238,7 +238,10 @@ def use_equiv_outs(spec_env, max_len):
         fin_prg += prg
     return fin_prg
 
+def pretty_print(code):
+    return "FINAL OUTPUT: \n" + '\n'.join(' '.join(i for i in j) for j in code)
+
 if __name__ == "__main__":
     from sys import argv
     eis = list(envs_and_instrs(argv[1]))
-    print('Dong!', use_equiv_outs(eis[-1][0], len(eis) - 1))
+    print(pretty_print(use_equiv_outs(eis[-1][0], len(eis) - 1)))

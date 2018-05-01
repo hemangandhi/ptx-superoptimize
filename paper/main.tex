@@ -82,6 +82,9 @@ These optimizations entail keeping the same items pruned:
 so if the search finds that a class of programs
 can be pruned, it keeps them pruned across all
 the relevant restarts and input refinements.
+Furthermore, the LENS algorithm searches both forward and backward,
+using stronger pre-conditions inferred from searching. These
+optimizations are discussed as a future direction for this project.
 
 Another interesting work looks into the use of X86
 SIMD instructions. It is quite different from simply
@@ -193,7 +196,7 @@ form the core program.
 
 \subsection{The Parsing Structures and Semantics}
 
-\texttt{pyparsing} is the main library this program rests on.
+\texttt{pyparsing} is the main library this part rests on.
 Assuming just the instructions, the program can read and parse
 the most basic arithmetic instructions, handling a few hundred.
 
@@ -377,6 +380,7 @@ The Ocelot project \cite{GPUOcelot} showed that though a project may seem promis
 its maintenance may not exist. Building the project proved to be impossible as the versions
 only aligned when the project was built and that astronomical event has passed.
 In the future, less time should be spent behind one project, especially if it does not build.
+Alternatives, such as \texttt{pyparsing} should have been considered much sooner.
 
 %Start sooner!
 The intractability of the naive search sprang up surprisingly quickly: even generating 2
@@ -475,17 +479,23 @@ branching cannot be ignored. This would be
 a key extension on the original program as
 it is a limitation of the current implementation.
 
+Another theoretical improvement would be finding a
+more accurate heuristic or proving the accuracy
+of the current one through stronger, more realistic,
+benchmarks. Currently the code generator is likely
+not robust enough to compete against NVCC.
+
 \subsection{More Benchmarks}
 
 Hacker's delight and other small segments of
 straight-line code will likely be the first
 victims of super-optimisation to test the
-encoding of the PTX ISA.
+basic implementation of non-parallel algorithms.
 
 Most useful benchmarks would arise from the related works aforementioned:
 the hiCUDA \cite{hicuda} framework's tests and tests
 from the CUDA loop optimiser \cite{CUDASynth} would likely
-be the final benchmarks.
+be excellent benchmarks.
 
 The super-optimiser should take hiCUDA or otherwise
 well-produced CUDA code and optimise it for
